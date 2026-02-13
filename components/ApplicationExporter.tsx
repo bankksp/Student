@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { Student, Evaluation, EvaluationScore } from '../types.ts';
 import { EVALUATION_QUESTIONS } from '../constants.tsx';
@@ -164,8 +162,8 @@ const ApplicationPage = ({ student, systemConfig }: { student: Student, systemCo
         
         {/* 1. โลโก้และชื่อโรงเรียน (จัดให้อยู่ตรงกลางหน้ากระดาษจริงๆ โดยไม่ใช้ Absolute) */}
         <div className="w-full flex flex-col items-center pt-0">
-            <img src={logoUrl} alt="Logo" className="w-[3.5cm] h-auto object-contain mb-2" />
-            <h1 className="text-2xl font-bold text-black leading-none mb-2">ใบสมัคร</h1>
+            <img src={logoUrl} alt="Logo" className="w-[2.5cm] h-auto object-contain mb-1/4" />
+            <h1 className="text-2xl font-bold text-black leading-none mb-1/4">ใบสมัคร</h1>
             <h2 className="text-[16px] font-bold text-black leading-tight">โรงเรียนกาฬสินธุ์ปัญญานุกูล จังหวัดกาฬสินธุ์</h2>
             <p className="font-medium text-sm mt-1">ภาคเรียนที่ 1 ประจำปีการศึกษา {systemConfig?.academicYear || '2569'}</p>
         </div>
@@ -180,11 +178,12 @@ const ApplicationPage = ({ student, systemConfig }: { student: Student, systemCo
             </div>
 
             {/* ข้อมูลใต้รูป */}
-            <div className="w-full text-sm space-y-1 mt-1 px-1 bg-white/80"> {/* bg-white ช่วยกันข้อความซ้อนทับถ้าจอเล็ก */}
+            <div className="w-full text-sm space-y-1 mt-1 px-1">
                <div className="flex items-end w-full">
                    <span className="whitespace-nowrap text-xs mr-1">เลขประจำตัว</span>
                    <div className="flex-1 border-b border-dotted border-black text-center text-xs h-5">
-                       {s.studentId || ''}
+                       {/* ใส่ตัวแปรเลขประจำตัวตรงนี้ถ้ามี หรือเว้นว่างไว้ */}
+                       {s.id || ''}
                    </div>
                </div>
                <div className="flex items-end w-full">
@@ -329,7 +328,7 @@ const ApplicationPage = ({ student, systemConfig }: { student: Student, systemCo
                 <div className="flex-1 border-b border-dotted border-gray-500 mr-1">{s.hasStudiedBefore ? s.previousSchool : ''}</div>
                 <span className="mr-1">ระดับ</span>
                 <div className="w-20 border-b border-dotted border-gray-500 mr-2 text-center">{s.hasStudiedBefore ? s.previousEducationLevel : ''}</div>
-                <span className="mr-1">พ.ศ.</span>
+                <span className="mr-1/2">พ.ศ.</span>
                 <div className="w-20 border-b border-dotted border-gray-500 text-center">{s.hasStudiedBefore ? s.previousEducationYear : ''}</div>
              </div>
         </div>
@@ -337,29 +336,29 @@ const ApplicationPage = ({ student, systemConfig }: { student: Student, systemCo
       </div>
 
       {/* --- FOOTER / SIGNATURE --- */}
-      <div className="mt-6 mb-4">
+        <div className="mt-2 mb-2">
         <div className="flex justify-between items-start px-8">
             {/* ผู้สมัคร */}
             <div className="flex flex-col items-center w-[40%]">
-                <div className="w-full border-b border-dotted border-black mb-2 h-8"></div> {/* เส้นเซ็น */}
+                <div className="w-full border-b border-dotted border-black mb-1 h-6"></div> {/* เส้นเซ็น */}
                 <div className="flex items-end w-full justify-center">
-                    <span className="mr-2">(</span>
-                    <div className="border-b border-dotted border-black flex-1 text-center h-6"></div>
-                    <span className="ml-2">)</span>
+                    <span className="mr-1">(</span>
+                    <div className="border-b border-dotted border-black flex-1 text-center h-5"></div>
+                    <span className="ml-1">)</span>
                 </div>
-                <p className="mt-1 font-bold">ผู้สมัคร</p>
+                <p className="font-bold">ผู้สมัคร</p>
             </div>
 
             {/* ผู้รับสมัคร */}
             <div className="flex flex-col items-center w-[40%]">
-                <div className="w-full border-b border-dotted border-black mb-2 h-8"></div> {/* เส้นเซ็น */}
+                <div className="w-full border-b border-dotted border-black mb-1 h-6"></div> {/* เส้นเซ็น */}
                 <div className="flex items-end w-full justify-center">
-                    <span className="mr-2">(</span>
-                    <div className="border-b border-dotted border-black flex-1 text-center h-6"></div>
-                    <span className="ml-2">)</span>
+                    <span className="mr-1">(</span>
+                    <div className="border-b border-dotted border-black flex-1 text-center h-5"></div>
+                    <span className="ml-1">)</span>
                 </div>
-                <p className="mt-1 font-bold">ผู้รับสมัคร</p>
-                <div className="w-full flex justify-center mt-2 text-sm">
+                <p className="font-bold">ผู้รับสมัคร</p>
+                <div className="w-full flex justify-center text-sm">
                     วันที่......./........../..........
                 </div>
             </div>
