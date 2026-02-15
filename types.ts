@@ -90,7 +90,7 @@ export interface Student {
   program: string;
   
   // System Fields
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'incomplete';
   appliedDate: string;
   rejectionReason?: string;
   adminNotes?: string;

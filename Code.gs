@@ -1,5 +1,7 @@
 
 
+
+
 /**
  * @description Google Apps Script backend for the School Admission System.
  */
@@ -372,7 +374,7 @@ function handleUpdateStudentStatus(params, sheet) {
 
   sheet.getRange(row, statusIdx + 1).setValue(newStatus);
   
-  if (newStatus === 'rejected') {
+  if (newStatus === 'rejected' || newStatus === 'incomplete') {
     sheet.getRange(row, reasonIdx + 1).setValue(reason || '');
   } else if (newStatus === 'approved') {
     // Clear the reason if approved
