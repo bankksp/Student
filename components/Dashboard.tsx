@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, UserCheck, School, Newspaper, Award, X, FileText, ListChecks, Upload, MonitorCheck, BookOpen, AlertCircle, CalendarDays, ArrowRight, HeartHandshake, ShieldCheck, Wrench, BarChartHorizontal, ClipboardEdit, ScanSearch, Megaphone } from 'lucide-react';
@@ -131,16 +133,19 @@ const RegulationModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsItems, students }) => {
   const [isRegulationOpen, setIsRegulationOpen] = useState(false);
   const totalApplicants = students.length;
-  const primaryApplicants = students.filter(s => s.applyLevel.startsWith('ประถมศึกษา')).length;
-  const secondaryApplicants = students.filter(s => s.applyLevel.startsWith('มัธยมศึกษา')).length;
+  //const primaryApplicants = students.filter(s => s.applyLevel.startsWith('ประถมศึกษา')).length;
+  //const secondaryApplicants = students.filter(s => s.applyLevel.startsWith('มัธยมศึกษา')).length;
   const approvedApplicants = students.filter(s => s.status === 'approved').length;
+  const incompleteApplicants = students.filter(s => s.status === 'incomplete').length;
 
   const pieData = [
-    { name: 'ประถมศึกษา', value: primaryApplicants, fill: '#3b82f6' },
-    { name: 'มัธยมศึกษา', value: secondaryApplicants, fill: '#ef4444' },
-  ];
+    { name: 'สมัครผ่าน', value: approvedApplicants, fill: '#22c55e' }, // green
+    { name: 'รอตรวจสอบ', value: students.filter(s => s.status === 'pending').length, fill: '#eab308' }, // yellow
+    { name: 'เอกสารไม่ครบ', value: incompleteApplicants, fill: '#f97316' }, // orange
+    { name: 'ไม่ผ่าน', value: students.filter(s => s.status === 'rejected').length, fill: '#ef4444' } // red
+  ].filter(d => d.value > 0);
   
-  const totalForPie = primaryApplicants + secondaryApplicants;
+  const totalForPie = students.length;
   const piePercentage = pieData.map(p => ({
     ...p,
     percent: totalForPie > 0 ? Math.round((p.value / totalForPie) * 100) : 0 
@@ -269,13 +274,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsIte
       <section>
         <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-800">ภาพรวมการรับสมัคร</h2>
-            <p className="text-gray-500 mt-3">ข้อมูลสรุปจำนวนผู้สมัครเรียนในระดับชั้นต่างๆ ประจำปีการศึกษา 2569</p>
+            <p className="text-gray-500 mt-3">ข้อมูลสรุปจำนวนผู้สมัครเรียนประจำปีการศึกษา 2569</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
           <StatCard title="ผู้สมัครทั้งหมด" value={totalApplicants} icon={Users} iconBgColor="bg-blue-100" iconTextColor="text-blue-600" />
-          <StatCard title="สมัครระดับประถม" value={primaryApplicants} icon={School} iconBgColor="bg-rose-100" iconTextColor="text-rose-600" />
-          <StatCard title="สมัครระดับมัธยม" value={secondaryApplicants} icon={Award} iconBgColor="bg-indigo-100" iconTextColor="text-indigo-600" />
-          <StatCard title="ผ่านการคัดเลือก" value={approvedApplicants} icon={UserCheck} iconBgColor="bg-green-100" iconTextColor="text-green-600" />
+          <StatCard title="สมัครผ่านแล้ว" value={approvedApplicants} icon={UserCheck} iconBgColor="bg-green-100" iconTextColor="text-green-600" />
+          <StatCard title="เอกสารไม่ครบ" value={incompleteApplicants} icon={AlertCircle} iconBgColor="bg-orange-100" iconTextColor="text-orange-600" />
+          <StatCard title="ระดับมัธยม" value={students.filter(s => s.applyLevel.startsWith('มัธยม')).length} icon={Award} iconBgColor="bg-indigo-100" iconTextColor="text-indigo-600" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
             <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -293,7 +298,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsIte
                 </div>
             </div>
             <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
-                <h3 className="font-bold text-gray-800 mb-4">สัดส่วนผู้สมัคร</h3>
+                <h3 className="font-bold text-gray-800 mb-4">สัดส่วนสถานะการสมัคร</h3>
                 {totalForPie > 0 ? (
                   <div className="flex-1 flex flex-col justify-center items-center gap-4">
                     <div style={{ width: '100%', height: 200 }}>
@@ -303,7 +308,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsIte
                                       const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
                                       const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
                                       const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                                      return ( <text x={x} y={y} fill="#4b5563" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={14} fontWeight="bold">{`${(percent * 100).toFixed(0)}%`}</text> );
+                                      return ( <text x={x} y={y} fill="#4b5563" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12} fontWeight="bold">{`${(percent * 100).toFixed(0)}%`}</text> );
                                     }}>
                                     {piePercentage.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                                 </Pie>
@@ -311,9 +316,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsIte
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-                     <div className="flex justify-center gap-6 mt-2">
+                     <div className="flex justify-center gap-x-4 gap-y-2 flex-wrap mt-2">
                         {piePercentage.map((p, i) => (
-                           <div key={i} className="flex items-center gap-2 text-sm text-gray-600"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.fill }}></div>{p.name} ({p.value})</div>
+                           <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.fill }}></div>{p.name} ({p.value})</div>
                         ))}
                     </div>
                   </div>

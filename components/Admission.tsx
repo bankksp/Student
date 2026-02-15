@@ -8,8 +8,10 @@
 
 
 
+
+
 import React, { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Clock, Upload, User, Users, Home, Save, School, MessageCircleWarning, FileText, Trash2, Image as ImageIcon, Building, FilePen, CalendarClock, Lock, AlertTriangle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, Upload, User, Users, Home, Save, School, MessageCircleWarning, FileText, Trash2, Image as ImageIcon, Building, FilePen, CalendarClock, Lock, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Student, SystemConfig, Evaluation } from '../types.ts';
 import { ApplicationExporter } from './ApplicationExporter.tsx';
 import { LoadingOverlay } from './LoadingOverlay.tsx';
@@ -66,6 +68,22 @@ export const StatusCheck = ({ initialId, students, onEdit, onDelete, evaluations
     }
   };
 
+  const getStatusDisplay = (status: string) => {
+    switch(status) {
+      case 'approved':
+        return { text: 'สมัครผ่าน', color: 'bg-green-100 text-green-700', icon: CheckCircle };
+      case 'rejected':
+        return { text: 'ไม่ผ่านการคัดเลือก', color: 'bg-red-100 text-red-700', icon: XCircle };
+      case 'incomplete':
+        return { text: 'เอกสารไม่ครบ', color: 'bg-orange-100 text-orange-700', icon: AlertCircle };
+      default:
+        return { text: 'รอตรวจสอบ', color: 'bg-yellow-100 text-yellow-700', icon: Clock };
+    }
+  };
+
+  const statusInfo = result ? getStatusDisplay(result.status) : null;
+  const StatusIcon = statusInfo ? statusInfo.icon : Clock;
+
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <div className="text-center space-y-2">
@@ -106,11 +124,9 @@ export const StatusCheck = ({ initialId, students, onEdit, onDelete, evaluations
                                   <p className="font-medium text-gray-800 text-lg">{result.prefix}{result.firstName} {result.lastName}</p>
                                   <p className="text-sm text-gray-500">ID: {result.nationalId}</p>
                               </div>
-                              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${result.status === 'approved' ? 'bg-green-100 text-green-700' : result.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                  {result.status === 'approved' && <CheckCircle className="w-4 h-4" />}
-                                  {result.status === 'rejected' && <XCircle className="w-4 h-4" />}
-                                  {result.status === 'pending' && <Clock className="w-4 h-4" />}
-                                  {result.status === 'approved' ? 'ผ่านการคัดเลือก' : result.status === 'rejected' ? 'ไม่ผ่านการคัดเลือก' : 'รอการตรวจสอบ'}
+                              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${statusInfo?.color}`}>
+                                  <StatusIcon className="w-4 h-4" />
+                                  {statusInfo?.text}
                               </div>
                           </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 pt-2">
@@ -131,7 +147,28 @@ export const StatusCheck = ({ initialId, students, onEdit, onDelete, evaluations
                      </div>
                   </div>
                 </div>
-                {result.status === 'rejected' && result.rejectionReason && (<div className="bg-red-50/50 p-6 border-t"><div className="flex items-start gap-3"><MessageCircleWarning className="w-5 h-5 text-red-500 mt-0.5" /><div><h4 className="font-semibold text-red-800">เหตุผลจากเจ้าหน้าที่</h4><p className="text-red-700 text-sm mt-1">{result.rejectionReason}</p></div></div></div>)}
+                
+                {/* Section to show reason for incomplete or rejected status */}
+                {(result.status === 'incomplete' || result.status === 'rejected') && result.rejectionReason && (
+                  <div className={`p-6 border-t ${result.status === 'incomplete' ? 'bg-orange-50/50' : 'bg-red-50/50'}`}>
+                    <div className="flex items-start gap-3">
+                      <MessageCircleWarning className={`w-5 h-5 mt-0.5 ${result.status === 'incomplete' ? 'text-orange-500' : 'text-red-500'}`} />
+                      <div>
+                        <h4 className={`font-semibold ${result.status === 'incomplete' ? 'text-orange-800' : 'text-red-800'}`}>
+                          {result.status === 'incomplete' ? 'สิ่งที่ต้องแก้ไข / เอกสารที่ขาด' : 'เหตุผลที่ไม่ผ่านการคัดเลือก'}
+                        </h4>
+                        <p className={`${result.status === 'incomplete' ? 'text-orange-700' : 'text-red-700'} text-sm mt-1 whitespace-pre-wrap`}>
+                          {result.rejectionReason}
+                        </p>
+                        {result.status === 'incomplete' && (
+                           <p className="text-xs text-orange-600 mt-2 font-medium">
+                              * กรุณาเตรียมเอกสารดังกล่าวและกดปุ่ม "แก้ไขใบสมัคร" เพื่ออัปโหลดเอกสารเพิ่มเติม หรือติดต่อเจ้าหน้าที่
+                           </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (<div className="text-center py-8"><div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><XCircle className="w-8 h-8 text-red-500" /></div><h3 className="text-gray-800 font-medium">ไม่พบข้อมูลผู้สมัคร</h3><p className="text-gray-500 text-sm mt-1">กรุณาตรวจสอบเลขบัตรประชาชนใหม่อีกครั้ง</p></div>)}
           </div>

@@ -8,8 +8,10 @@
 
 
 
+
+
 import React, { useState, useEffect } from 'react';
-import { Settings, Power, Users, Save, Bell, X, Check, FilePen, MessageSquareWarning, Newspaper, Plus, Trash2, Link, Video, Image as ImageIcon, ExternalLink, CircleDashed, Search, ChevronLeft, ChevronRight, CalendarClock } from 'lucide-react';
+import { Settings, Power, Users, Save, Bell, X, Check, FilePen, MessageSquareWarning, Newspaper, Plus, Trash2, Link, Video, Image as ImageIcon, ExternalLink, CircleDashed, Search, ChevronLeft, ChevronRight, CalendarClock, AlertTriangle, AlertCircle } from 'lucide-react';
 import { SystemConfig, Student, NewsItem, Evaluation } from '../types.ts';
 import { ApplicationExporter } from './ApplicationExporter.tsx';
 import { LoadingOverlay } from './LoadingOverlay.tsx';
@@ -27,8 +29,8 @@ const getDriveImageUrl = (url?: string) => {
   return url;
 };
 
-// #region --- Rejection Modal ---
-const RejectionModal = ({ isOpen, onClose, onSubmit, studentName }: { isOpen: boolean, onClose: () => void, onSubmit: (reason: string) => void, studentName: string }) => {
+// #region --- Reason Modal (Generic for Rejection/Incomplete) ---
+const StatusReasonModal = ({ isOpen, onClose, onSubmit, studentName, title, placeholder, actionType }: { isOpen: boolean, onClose: () => void, onSubmit: (reason: string) => void, studentName: string, title: string, placeholder: string, actionType: 'rejected' | 'incomplete' }) => {
   const [reason, setReason] = useState('');
 
   useEffect(() => {
@@ -42,39 +44,41 @@ const RejectionModal = ({ isOpen, onClose, onSubmit, studentName }: { isOpen: bo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      alert('กรุณาระบุเหตุผลที่ไม่อนุมัติ');
+      alert('กรุณาระบุรายละเอียด');
       return;
     }
     onSubmit(reason);
   };
+  
+  const isRejected = actionType === 'rejected';
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full animate-scale-in" onClick={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
           <div className="p-6 border-b">
-            <h3 className="text-lg font-bold text-gray-800">เหตุผลที่ไม่อนุมัติใบสมัคร</h3>
+            <h3 className={`text-lg font-bold ${isRejected ? 'text-red-800' : 'text-orange-800'}`}>{title}</h3>
             <p className="text-sm text-gray-500">สำหรับ: {studentName}</p>
           </div>
           <div className="p-6">
-            <label htmlFor="rejectionReason" className="block text-sm font-medium text-gray-700 mb-2">
-              กรุณาระบุสิ่งที่ต้องแก้ไข หรือเอกสารที่ขาด
+            <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+              รายละเอียด / เหตุผล
             </label>
             <textarea
-              id="rejectionReason"
+              id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full h-32 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-              placeholder="เช่น เอกสารไม่ครบ, ขาดสำเนาทะเบียนบ้านของบิดา..."
+              placeholder={placeholder}
             ></textarea>
           </div>
           <div className="px-6 py-4 bg-gray-50 flex justify-end items-center gap-3 rounded-b-2xl">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300 transition-colors">
               ยกเลิก
             </button>
-            <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors flex items-center gap-1.5">
+            <button type="submit" className={`px-4 py-2 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 ${isRejected ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
               <MessageSquareWarning className="w-4 h-4" />
-              ยืนยันการไม่อนุมัติ
+              ยืนยัน
             </button>
           </div>
         </form>
@@ -86,19 +90,21 @@ const RejectionModal = ({ isOpen, onClose, onSubmit, studentName }: { isOpen: bo
 
 // #region --- Student Management Components ---
 const StatusBadge = ({ status }: { status: Student['status']}) => {
-    const baseClasses = "px-2 py-0.5 rounded text-xs font-medium";
-    if (status === 'approved') return <span className={`${baseClasses} bg-green-100 text-green-700`}>อนุมัติ</span>;
-    if (status === 'rejected') return <span className={`${baseClasses} bg-red-100 text-red-700`}>ไม่อนุมัติ</span>;
-    return <span className={`${baseClasses} bg-yellow-100 text-yellow-700`}>รอตรวจสอบ</span>;
+    const baseClasses = "px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 w-fit";
+    if (status === 'approved') return <span className={`${baseClasses} bg-green-100 text-green-700`}><Check size={12}/> สมัครผ่าน</span>;
+    if (status === 'rejected') return <span className={`${baseClasses} bg-red-100 text-red-700`}><X size={12}/> ไม่ผ่าน</span>;
+    if (status === 'incomplete') return <span className={`${baseClasses} bg-orange-100 text-orange-700`}><AlertCircle size={12}/> เอกสารไม่ครบ</span>;
+    return <span className={`${baseClasses} bg-yellow-100 text-yellow-700`}><CircleDashed size={12}/> รอตรวจสอบ</span>;
 }
 
-const StudentDetailModal = ({ student, isOpen, onClose, onEdit, onDelete, evaluations, onUpdateStatus, onNavigate }: { student: Student | null, isOpen: boolean, onClose: () => void, onEdit: (student: Student) => void, onDelete: (studentId: string) => void, evaluations: Evaluation[], onUpdateStatus: (studentId: string, status: 'approved' | 'rejected', reason?: string) => void, onNavigate: (path: string) => void }) => {
+const StudentDetailModal = ({ student, isOpen, onClose, onEdit, onDelete, evaluations, onUpdateStatus, onNavigate }: { student: Student | null, isOpen: boolean, onClose: () => void, onEdit: (student: Student) => void, onDelete: (studentId: string) => void, evaluations: Evaluation[], onUpdateStatus: (studentId: string, status: 'approved' | 'rejected' | 'incomplete', reason?: string) => void, onNavigate: (path: string) => void }) => {
   const [imgError, setImgError] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'rejected' | 'incomplete'>('rejected');
 
   useEffect(() => {
     setImgError(false);
-    setIsRejecting(false);
+    setIsModalOpen(false);
   }, [student]);
 
   if (!isOpen || !student) return null;
@@ -151,9 +157,14 @@ const StudentDetailModal = ({ student, isOpen, onClose, onEdit, onDelete, evalua
       }
   };
 
-  const handleRejectSubmit = (reason: string) => {
-      onUpdateStatus(student.id, 'rejected', reason);
-      setIsRejecting(false);
+  const openStatusModal = (type: 'rejected' | 'incomplete') => {
+      setModalType(type);
+      setIsModalOpen(true);
+  };
+
+  const handleStatusSubmit = (reason: string) => {
+      onUpdateStatus(student.id, modalType, reason);
+      setIsModalOpen(false);
       onClose();
   };
 
@@ -191,11 +202,22 @@ const StudentDetailModal = ({ student, isOpen, onClose, onEdit, onDelete, evalua
           </div>
         </div>
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+          {student.rejectionReason && (student.status === 'rejected' || student.status === 'incomplete') && (
+               <div className={`p-4 rounded-lg border flex items-start gap-3 ${student.status === 'incomplete' ? 'bg-orange-50 border-orange-100' : 'bg-red-50 border-red-100'}`}>
+                   <MessageSquareWarning className={`w-5 h-5 shrink-0 ${student.status === 'incomplete' ? 'text-orange-600' : 'text-red-600'}`} />
+                   <div>
+                       <h5 className={`font-bold text-sm mb-1 ${student.status === 'incomplete' ? 'text-orange-800' : 'text-red-800'}`}>
+                           {student.status === 'incomplete' ? 'สิ่งที่ต้องแก้ไข (เอกสารไม่ครบ)' : 'เหตุผลที่ไม่อนุมัติ'}
+                       </h5>
+                       <p className={`text-sm ${student.status === 'incomplete' ? 'text-orange-700' : 'text-red-700'}`}>{student.rejectionReason}</p>
+                   </div>
+               </div>
+          )}
+
           <Section title="ข้อมูลการสมัคร">
             <DetailItem label="ระดับชั้นที่สมัคร" value={student.applyLevel} />
             <DetailItem label="แผนการเรียน" value={student.program} />
             <DetailItem label="วันที่สมัคร" value={formatDate(student.appliedDate)} />
-            <DetailItem label="เหตุผลจากแอดมิน (ถ้ามี)" value={student.rejectionReason} fullWidth={true} />
           </Section>
 
           <Section title="สถานะการประเมิน">
@@ -337,10 +359,13 @@ const StudentDetailModal = ({ student, isOpen, onClose, onEdit, onDelete, evalua
         <div className="p-4 bg-gray-50/50 rounded-b-2xl border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-center">
             <div className="flex items-center gap-2 lg:col-span-1">
                  <button onClick={handleApprove} className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-                    <Check className="w-4 h-4"/> อนุมัติ
+                    <Check className="w-4 h-4"/> สมัครผ่าน
                 </button>
-                <button onClick={() => setIsRejecting(true)} className="flex-1 flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-                    <X className="w-4 h-4"/> ไม่อนุมัติ
+                 <button onClick={() => openStatusModal('incomplete')} className="flex-1 flex items-center justify-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                    <AlertCircle className="w-4 h-4"/> เอกสารไม่ครบ
+                </button>
+                <button onClick={() => openStatusModal('rejected')} className="flex-1 flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                    <X className="w-4 h-4"/> ไม่ผ่าน
                 </button>
             </div>
             <div className="flex justify-center lg:col-span-1">
@@ -357,12 +382,20 @@ const StudentDetailModal = ({ student, isOpen, onClose, onEdit, onDelete, evalua
         </div>
       </div>
     </div>
-    <RejectionModal isOpen={isRejecting} onClose={() => setIsRejecting(false)} onSubmit={handleRejectSubmit} studentName={`${student.firstName} ${student.lastName}`} />
+    <StatusReasonModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSubmit={handleStatusSubmit} 
+        studentName={`${student.firstName} ${student.lastName}`} 
+        title={modalType === 'incomplete' ? 'ระบุเอกสารที่ขาด / สิ่งที่ต้องแก้ไข' : 'เหตุผลที่ไม่อนุมัติใบสมัคร'}
+        placeholder={modalType === 'incomplete' ? 'เช่น ขาดสำเนาทะเบียนบ้าน, รูปถ่ายไม่ชัดเจน...' : 'เช่น คุณสมบัติไม่ครบถ้วน...'}
+        actionType={modalType}
+    />
     </>
   );
 };
 
-const StudentManagement = ({ students, onEditStudent, onDeleteStudent, evaluations, onUpdateStatus, onNavigate }: { students: Student[], onEditStudent: (student: Student) => void, onDeleteStudent: (studentId: string) => void, evaluations: Evaluation[], onUpdateStatus: (studentId: string, status: 'approved' | 'rejected', reason?: string) => void, onNavigate: (path: string) => void }) => {
+const StudentManagement = ({ students, onEditStudent, onDeleteStudent, evaluations, onUpdateStatus, onNavigate }: { students: Student[], onEditStudent: (student: Student) => void, onDeleteStudent: (studentId: string) => void, evaluations: Evaluation[], onUpdateStatus: (studentId: string, status: 'approved' | 'rejected' | 'incomplete', reason?: string) => void, onNavigate: (path: string) => void }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
