@@ -14,6 +14,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Power, Users, Save, Bell, X, Check, FilePen, MessageSquareWarning, Newspaper, Plus, Trash2, Link, Video, Image as ImageIcon, ExternalLink, CircleDashed, Search, ChevronLeft, ChevronRight, CalendarClock, AlertTriangle, AlertCircle } from 'lucide-react';
 import { SystemConfig, Student, NewsItem, Evaluation } from '../types.ts';
 import { ApplicationExporter } from './ApplicationExporter.tsx';
+import { BulkExporter } from './BulkExporter.tsx';
 import { LoadingOverlay } from './LoadingOverlay.tsx';
 
 // Helper function for Google Drive Images
@@ -412,6 +413,19 @@ const StudentManagement = ({ students, onEditStudent, onDeleteStudent, evaluatio
 
     return (
         <div className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                        <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-gray-800">รายชื่อผู้สมัคร</h3>
+                        <p className="text-xs text-gray-500">จัดการและตรวจสอบข้อมูลการสมัครเรียน</p>
+                    </div>
+                </div>
+                <BulkExporter students={students} />
+            </div>
+
             <div className="flex justify-between items-center gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
