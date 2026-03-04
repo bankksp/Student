@@ -1,8 +1,8 @@
 
 
 import React, { useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, UserCheck, School, Newspaper, Award, X, FileText, ListChecks, Upload, MonitorCheck, BookOpen, AlertCircle, CalendarDays, ArrowRight, HeartHandshake, ShieldCheck, Wrench, BarChartHorizontal, ClipboardEdit, ScanSearch, Megaphone } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import { Users, UserCheck, School, Newspaper, Award, X, FileText, ListChecks, Upload, MonitorCheck, BookOpen, AlertCircle, CalendarDays, ArrowRight, HeartHandshake, ShieldCheck, Wrench, BarChartHorizontal, ClipboardEdit, ScanSearch, Megaphone, FileSearch, UserMinus, GraduationCap } from 'lucide-react';
 import { CHART_DATA } from '../constants.tsx';
 import { NewsItem, Student } from '../types.ts';
 import { NewsCard } from './NewsCard.tsx';
@@ -133,16 +133,30 @@ const RegulationModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsItems, students }) => {
   const [isRegulationOpen, setIsRegulationOpen] = useState(false);
   const totalApplicants = students.length;
-  //const primaryApplicants = students.filter(s => s.applyLevel.startsWith('ประถมศึกษา')).length;
-  //const secondaryApplicants = students.filter(s => s.applyLevel.startsWith('มัธยมศึกษา')).length;
   const approvedApplicants = students.filter(s => s.status === 'approved').length;
   const incompleteApplicants = students.filter(s => s.status === 'incomplete').length;
+  const pendingApplicants = students.filter(s => s.status === 'pending').length;
+  const rejectedApplicants = students.filter(s => s.status === 'rejected').length;
+
+  // Group by grade level
+  const gradeLevels = [
+    'ประถมศึกษาปีที่ 1', 'ประถมศึกษาปีที่ 2', 'ประถมศึกษาปีที่ 3', 
+    'ประถมศึกษาปีที่ 4', 'ประถมศึกษาปีที่ 5', 'ประถมศึกษาปีที่ 6',
+    'มัธยมศึกษาปีที่ 1', 'มัธยมศึกษาปีที่ 2', 'มัธยมศึกษาปีที่ 3',
+    'มัธยมศึกษาปีที่ 4', 'มัธยมศึกษาปีที่ 5', 'มัธยมศึกษาปีที่ 6'
+  ];
+
+  const gradeData = gradeLevels.map(level => ({
+    name: level.replace('ประถมศึกษาปีที่ ', 'ป.').replace('มัธยมศึกษาปีที่ ', 'ม.'),
+    fullName: level,
+    count: students.filter(s => s.applyLevel === level).length
+  })).filter(d => d.count >= 0); // Keep all for consistent chart or filter d.count > 0
 
   const pieData = [
     { name: 'สมัครผ่าน', value: approvedApplicants, fill: '#22c55e' }, // green
-    { name: 'รอตรวจสอบ', value: students.filter(s => s.status === 'pending').length, fill: '#eab308' }, // yellow
+    { name: 'รอตรวจสอบ', value: pendingApplicants, fill: '#eab308' }, // yellow
     { name: 'เอกสารไม่ครบ', value: incompleteApplicants, fill: '#f97316' }, // orange
-    { name: 'ไม่ผ่าน', value: students.filter(s => s.status === 'rejected').length, fill: '#ef4444' } // red
+    { name: 'ไม่ผ่าน', value: rejectedApplicants, fill: '#ef4444' } // red
   ].filter(d => d.value > 0);
   
   const totalForPie = students.length;
@@ -276,49 +290,96 @@ const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsIte
             <h2 className="text-3xl font-bold text-gray-800">ภาพรวมการรับสมัคร</h2>
             <p className="text-gray-500 mt-3">ข้อมูลสรุปจำนวนผู้สมัครเรียนประจำปีการศึกษา 2569</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-12">
           <StatCard title="ผู้สมัครทั้งหมด" value={totalApplicants} icon={Users} iconBgColor="bg-blue-100" iconTextColor="text-blue-600" />
           <StatCard title="สมัครผ่านแล้ว" value={approvedApplicants} icon={UserCheck} iconBgColor="bg-green-100" iconTextColor="text-green-600" />
+          <StatCard title="รอตรวจสอบ" value={pendingApplicants} icon={FileSearch} iconBgColor="bg-yellow-100" iconTextColor="text-yellow-600" />
           <StatCard title="เอกสารไม่ครบ" value={incompleteApplicants} icon={AlertCircle} iconBgColor="bg-orange-100" iconTextColor="text-orange-600" />
-          <StatCard title="ระดับมัธยม" value={students.filter(s => s.applyLevel.startsWith('มัธยม')).length} icon={Award} iconBgColor="bg-indigo-100" iconTextColor="text-indigo-600" />
+          <StatCard title="ไม่ผ่านการคัดเลือก" value={rejectedApplicants} icon={UserMinus} iconBgColor="bg-red-100" iconTextColor="text-red-600" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
-            <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><BarChartHorizontal className="w-5 h-5 text-blue-500"/>แนวโน้มผู้สมัครรายวัน</h3>
-                <div style={{ width: '100%', height: 300 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+            {/* Grade Level Chart */}
+            <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                        <GraduationCap className="w-5 h-5 text-blue-500"/>
+                        จำนวนนักเรียนแยกตามระดับชั้น
+                    </h3>
+                    <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">ข้อมูลรายระดับชั้น</span>
+                </div>
+                <div style={{ width: '100%', height: 350 }}>
                     <ResponsiveContainer>
-                        <AreaChart data={CHART_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                            <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                            <Tooltip contentStyle={{ borderRadius: '12px', borderColor: '#e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}/>
-                            <Area type="monotone" dataKey="applicants" stroke="#2563eb" fill="#dbeafe" strokeWidth={2} />
-                        </AreaChart>
+                        <BarChart data={gradeData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                            <XAxis 
+                                dataKey="name" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fill: '#6b7280', fontSize: 12 }}
+                            />
+                            <YAxis 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fill: '#6b7280', fontSize: 12 }}
+                            />
+                            <Tooltip 
+                                cursor={{ fill: '#f9fafb' }}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value: number) => [`${value} คน`, 'จำนวนผู้สมัคร']}
+                            />
+                            <Bar 
+                                dataKey="count" 
+                                fill="#3b82f6" 
+                                radius={[6, 6, 0, 0]} 
+                                barSize={30}
+                            />
+                        </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
-            <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
-                <h3 className="font-bold text-gray-800 mb-4">สัดส่วนสถานะการสมัคร</h3>
+
+            {/* Status Pie Chart */}
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
+                <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <ListChecks className="w-5 h-5 text-emerald-500"/>
+                    สัดส่วนสถานะการสมัคร
+                </h3>
                 {totalForPie > 0 ? (
-                  <div className="flex-1 flex flex-col justify-center items-center gap-4">
-                    <div style={{ width: '100%', height: 200 }}>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div style={{ width: '100%', height: 220 }}>
                         <ResponsiveContainer>
                             <PieChart>
-                                <Pie data={piePercentage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                                      const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
-                                      const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-                                      const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                                      return ( <text x={x} y={y} fill="#4b5563" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12} fontWeight="bold">{`${(percent * 100).toFixed(0)}%`}</text> );
-                                    }}>
+                                <Pie 
+                                    data={piePercentage} 
+                                    dataKey="value" 
+                                    nameKey="name" 
+                                    cx="50%" 
+                                    cy="50%" 
+                                    innerRadius={60}
+                                    outerRadius={85} 
+                                    paddingAngle={5}
+                                    labelLine={false}
+                                >
                                     {piePercentage.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-                     <div className="flex justify-center gap-x-4 gap-y-2 flex-wrap mt-2">
+                    <div className="space-y-3 mt-6">
                         {piePercentage.map((p, i) => (
-                           <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.fill }}></div>{p.name} ({p.value})</div>
+                           <div key={i} className="flex items-center justify-between text-sm">
+                               <div className="flex items-center gap-2">
+                                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.fill }}></div>
+                                   <span className="text-gray-600">{p.name}</span>
+                               </div>
+                               <div className="flex items-center gap-3">
+                                   <span className="font-bold text-gray-800">{p.value}</span>
+                                   <span className="text-xs text-gray-400 w-8 text-right">{p.percent}%</span>
+                               </div>
+                           </div>
                         ))}
                     </div>
                   </div>
@@ -328,6 +389,57 @@ const Dashboard: React.FC<DashboardProps> = ({ onApplyClick, onNavigate, newsIte
                     <p className="text-sm font-medium">ยังไม่มีผู้สมัคร</p>
                   </div>
                 )}
+            </div>
+        </div>
+
+        {/* Daily Trend Chart */}
+        <div className="mt-6 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <BarChartHorizontal className="w-5 h-5 text-indigo-500"/>
+                    สถิติการสมัครรายวัน
+                </h3>
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                        <span>จำนวนผู้สมัคร</span>
+                    </div>
+                </div>
+            </div>
+            <div style={{ width: '100%', height: 250 }}>
+                <ResponsiveContainer>
+                    <AreaChart data={CHART_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorApplicants" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <XAxis 
+                            dataKey="date" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#6b7280', fontSize: 12 }} 
+                        />
+                        <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#6b7280', fontSize: 12 }} 
+                        />
+                        <Tooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Area 
+                            type="monotone" 
+                            dataKey="applicants" 
+                            stroke="#3b82f6" 
+                            fillOpacity={1} 
+                            fill="url(#colorApplicants)" 
+                            strokeWidth={3} 
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
             </div>
         </div>
       </section>
